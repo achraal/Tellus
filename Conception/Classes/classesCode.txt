@@ -1,0 +1,80 @@
+@startuml tellus_classes_styled
+!theme plain
+skinparam classAttributeIconSize 0
+
+title Tellus - Diagramme de Classes (MVP)
+
+class Utilisateur {
+  -id : ObjectId
+  -nom : String
+  -email : String (Identifiant)
+  -motDePasse : String (Crypté Argon2)
+  -role : Enum (AGRICULTEUR, ACHETEUR, ADMIN)
+  -telephone : String 
+}
+
+class Annonce {
+  -id : ObjectId
+  -titre : String
+  -description : String
+  -quantite : Double
+  -prixUnitaire : Double
+  -unite : String (Kg, Tonne)
+  -dateDisponibilite : Date
+  -label : String (Bio, Local)
+  -localisation : GeoJSON (Point) 
+  -photosUrl : List<String>
+}
+
+class Commande {
+  -id : ObjectId
+  -dateCommande : DateTime
+  -statut : Enum (ATTENTE, VALIDEE, TERMINEE)
+  -totalTTC : Double
+  -modeRecuperation : String (Livraison/Retrait) 
+}
+
+class LigneCommande {
+  -quantite : Double
+  -prixApplique : Double
+}
+
+class Facture {
+  -id : ObjectId
+  -numeroFacture : String
+  -dateEmission : DateTime
+  -pdfPath : String 
+}
+
+' Relations métier PURES
+Utilisateur "1" -- "0..*" Annonce : publie
+Utilisateur "1" -- "0..*" Commande : effectue
+Annonce "1" -- "0..*" LigneCommande : concerne
+Commande "1" *-- "1..*" LigneCommande : contient
+Commande "1" -- "0..1" Facture : génère
+
+note right of Utilisateur
+  Authentification via JWT
+  Rôles gérés dans le token
+  
+end note
+
+note right of Annonce
+  **Mode Hors-ligne (Mobile)** :
+  Stockage initial dans AsyncStorage
+  Synchronisation auto via API REST
+end note
+
+note right of Commande
+  Notifications Push (FCM)
+  envoyées à chaque changement
+  de statut (Validée/Refusée)
+end note
+
+note bottom of Annonce
+  Indexation Geospatial MongoDB :
+  Permet le filtrage par rayon (km)
+  sur la plateforme Web
+end note
+
+@enduml

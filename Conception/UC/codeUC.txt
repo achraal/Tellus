@@ -1,0 +1,76 @@
+@startuml tellus_usecases_styled
+!theme plain
+
+' Style pour les cas d'utilisation (Bleu clair)
+skinparam usecase {
+  BackgroundColor #E3F2FD
+  BorderColor #1976D2
+}
+
+' Style pour les acteurs (Orange clair)
+skinparam actor {
+  BackgroundColor #FFF3E0
+  BorderColor #F57C00
+}
+
+' Style pour le conteneur du système
+skinparam rectangle {
+  BackgroundColor white
+}
+
+title **Tellus** - Diagramme de Cas d'Utilisation 
+
+left to right direction
+
+actor "Agriculteur\n(Mobile)" as Agriculteur 
+actor "Acheteur B2B\n(Web)" as Acheteur 
+actor "Administrateur" as Admin 
+
+rectangle "Tellus Platform" {
+
+  ' Cas d'utilisation Agriculteur
+  (Gérer le catalogue\nCRUD annonces) as UC1 
+  (Géolocaliser\nune annonce) as UC2 
+  (Synchroniser\nMode Hors-ligne) as UC3 
+  (Gérer les\ncommandes entrantes) as UC4 
+
+  ' Cas d'utilisation Acheteur
+  (Rechercher & Filtrer\nGéo-proximité) as UC5 
+  (Passer une commande\nPanier/Validation) as UC6
+  (Suivre l'état\ndes commandes) as UC7
+  (Générer des\nfactures PDF) as UC8
+  (Consulter les\nanalyses/prix) as UC9
+
+  ' Cas d'utilisation Transverses
+  (Modérer les comptes) as UC10 
+  (Gérer les litiges) as UC11 
+  (Recevoir des\nnotifications Push) as UC12 
+}
+
+' Relations Agriculteur
+Agriculteur --> UC1
+Agriculteur --> UC4
+Agriculteur --> UC12
+UC1 ..> UC2 : <<include>>
+UC1 ..> UC3 : <<include>>
+
+' Relations Acheteur
+Acheteur --> UC5
+Acheteur --> UC6
+Acheteur --> UC7
+Acheteur --> UC9
+UC7 ..> UC8 : <<extend>>
+
+' Relations Administrateur
+Admin --> UC10
+Admin --> UC11
+
+note right of UC3
+  **Offline-First**
+  Synchronisation auto
+  dès retour réseau 
+end note
+
+
+
+@enduml
