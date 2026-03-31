@@ -1,0 +1,37 @@
+app/settings/_layout.tsx(16,62): error TS2353: Object literal may only specify known properties, and 'letterSpacing' does not exist in type '(Pick<TextStyle, "fontSize" | "fontWeight" | "fontFamily"> & { color?: string | undefined; }) | RecursiveArray<Falsy | (Pick<TextStyle, "fontSize" | "fontWeight" | "fontFamily"> & { ...; }) | RegisteredStyle<...>>'.
+components/parallax-scroll-view.tsx(50,7): error TS2322: Type '{ backgroundColor: string | string[]; flex: number; }' is not assignable to type 'StyleProp<AnimatedStyle<StyleProp<ViewStyle>>>'.
+  Types of property 'backgroundColor' are incompatible.
+    Type 'string | string[]' is not assignable to type 'ColorValue | SharedValueDisableContravariance<string> | SharedValueDisableContravariance<OpaqueColorValue> | { ...; } | undefined'.
+      Type 'string[]' is not assignable to type 'ColorValue | SharedValueDisableContravariance<string> | SharedValueDisableContravariance<OpaqueColorValue> | { ...; } | undefined'.
+        Type 'string[]' is missing the following properties from type '{ toString: (() => string) | SharedValueDisableContravariance<() => string> | {}; valueOf: (() => symbol) | SharedValueDisableContravariance<() => symbol> | {}; readonly description: MaybeSharedValue<...> | undefined; [Symbol.toPrimitive]: ((hint: string) => symbol) | ... 1 more ... | {}; readonly [Symbol.toStringTa...': description, [Symbol.toPrimitive], [Symbol.toStringTag], __TYPE__
+components/themed-text.tsx(23,9): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(props: TextProps): Text', gave the following error.
+    Type '{ color: string | string[]; }' is not assignable to type 'TextStyle | Falsy | RegisteredStyle<TextStyle> | RecursiveArray<TextStyle | Falsy | RegisteredStyle<TextStyle>> | readonly (TextStyle | ... 1 more ... | RegisteredStyle<...>)[]'.
+      Types of property 'color' are incompatible.
+        Type 'string | string[]' is not assignable to type 'ColorValue | undefined'.
+          Type 'string[]' is not assignable to type 'ColorValue | undefined'.
+            Type 'string[]' is not assignable to type 'OpaqueColorValue'.
+              Type 'string[]' is not assignable to type 'symbol'.
+  Overload 2 of 2, '(props: TextProps, context: any): Text', gave the following error.
+    Type '{ color: string | string[]; }' is not assignable to type 'TextStyle | Falsy | RegisteredStyle<TextStyle> | RecursiveArray<TextStyle | Falsy | RegisteredStyle<TextStyle>> | readonly (TextStyle | ... 1 more ... | RegisteredStyle<...>)[]'.
+      Types of property 'color' are incompatible.
+        Type 'string | string[]' is not assignable to type 'ColorValue | undefined'.
+          Type 'string[]' is not assignable to type 'ColorValue | undefined'.
+            Type 'string[]' is not assignable to type 'OpaqueColorValue'.
+              Type 'string[]' is not assignable to type 'symbol'.
+components/themed-view.tsx(13,24): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(props: ViewProps): View', gave the following error.
+    Type '{ backgroundColor: string | string[]; }' is not assignable to type 'ViewStyle | Falsy | RegisteredStyle<ViewStyle> | RecursiveArray<ViewStyle | Falsy | RegisteredStyle<ViewStyle>> | readonly (ViewStyle | ... 1 more ... | RegisteredStyle<...>)[]'.
+      Types of property 'backgroundColor' are incompatible.
+        Type 'string | string[]' is not assignable to type 'ColorValue | undefined'.
+          Type 'string[]' is not assignable to type 'ColorValue | undefined'.
+            Type 'string[]' is not assignable to type 'OpaqueColorValue'.
+              Type 'string[]' is not assignable to type 'symbol'.
+  Overload 2 of 2, '(props: ViewProps, context: any): View', gave the following error.
+    Type '{ backgroundColor: string | string[]; }' is not assignable to type 'ViewStyle | Falsy | RegisteredStyle<ViewStyle> | RecursiveArray<ViewStyle | Falsy | RegisteredStyle<ViewStyle>> | readonly (ViewStyle | ... 1 more ... | RegisteredStyle<...>)[]'.
+      Types of property 'backgroundColor' are incompatible.
+        Type 'string | string[]' is not assignable to type 'ColorValue | undefined'.
+          Type 'string[]' is not assignable to type 'ColorValue | undefined'.
+            Type 'string[]' is not assignable to type 'OpaqueColorValue'.
+              Type 'string[]' is not assignable to type 'symbol'.
+components/ui/collapsible.tsx(6,10): error TS2305: Module '"@/components/ui/icon-symbol"' has no exported member 'IconSymbol'.
