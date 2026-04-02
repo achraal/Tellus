@@ -15,17 +15,17 @@ public class Produit {
     @Id
     private String id;
 
-    private String titre; // [cite: 19]
-    private String photoUrl; // [cite: 19]
-    private Double quantite; // [cite: 19]
-    private Double prixAuKg; // [cite: 19]
-    private LocalDate dateDisponibilite; // [cite: 19]
-    private String label; // [cite: 19]
+    private String titre;
+    private String photoUrl;
+    private Double quantite;
+    private Double prixAuKg;
+    private LocalDate dateDisponibilite;
+    private String label;
 
     // Indexation géospatiale pour la recherche par rayon
     @GeoSpatialIndexed(type = GeoSpatialIndexType.GEO_2DSPHERE)
     private GeoJsonPoint location;
 
     private String agriculteurId; // ID de l'utilisateur qui crée l'annonce
-    private String statut = "DISPONIBLE"; // [cite: 77, 78]
+    private String statut = "DISPONIBLE";
 }

@@ -14,8 +14,10 @@ public class User {
     @Indexed(unique = true)
     private String email;
 
-    private String password; // Sera haché avec BCrypt ou Argon2 [cite: 61]
+    private String password; // Sera haché avec BCrypt ou Argon2
     private String nom;
     private String entreprise; // Pour l'acheteur Pro
     private String role; // "ROLE_AGRICULTEUR", "ROLE_ACHETEUR", "ROLE_ADMIN"
+
+    private String fcmToken; // Token généré par Firebase sur le mobile de l'agriculteur
 }

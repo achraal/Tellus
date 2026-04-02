@@ -1,16 +1,16 @@
 package com.tellus.tellusbackend.controller;
 
 import com.tellus.tellusbackend.config.JwtUtils;
+import com.tellus.tellusbackend.dto.JwtResponse;
+import com.tellus.tellusbackend.dto.LoginRequest;
 import com.tellus.tellusbackend.model.User;
 import com.tellus.tellusbackend.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -34,7 +34,7 @@ public class AuthController {
         // Hachage du mot de passe avec Argon2
         user.setPassword(passwordEncoder.encode(user.getPassword()));
 
-        // Par défaut, on peut assigner ROLE_AGRICULTEUR pour le mobile [cite: 14]
+        // Par défaut, on peut assigner ROLE_AGRICULTEUR pour le mobile
         if (user.getRole() == null) user.setRole("ROLE_AGRICULTEUR");
 
         userRepository.save(user);
@@ -53,5 +53,13 @@ public class AuthController {
         } else {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Identifiants incorrects");
         }
+    }
+    @PutMapping("/update-fcm-token")
+    public ResponseEntity<?> updateFcmToken(@AuthenticationPrincipal String email, @RequestBody String token) {
+        return userRepository.findByEmail(email).map(user -> {
+            user.setFcmToken(token);
+            userRepository.save(user);
+            return ResponseEntity.ok("Token mis à jour pour les notifications");
+        }).orElse(ResponseEntity.status(404).build());
     }
 }

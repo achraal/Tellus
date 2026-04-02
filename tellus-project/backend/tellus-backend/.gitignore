@@ -31,3 +31,13 @@ build/
 
 ### VS Code ###
 .vscode/
+
+# Secrets et Environnement
+.env
+.env.local
+*.json
+!pom.xml
+!composer.json
+
+# Firebase Admin SDK 
+serviceAccountKey.json

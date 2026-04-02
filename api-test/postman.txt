@@ -1,0 +1,67 @@
+POST 
+{
+  "titre": "Tomates Cerises",
+  "quantite": 50.0,
+  "prixAuKg": 12.0,
+  "label": "Bio",
+  "location": {
+    "type": "Point",
+    "coordinates": [-7.611, 33.573] 
+  }
+}
+
+POST http://localhost:8080/api/auth/register
+
+{
+  "nom": "Ossama",
+  "email": "ossama@tellus.ma",
+  "password": "Password123",
+  "role": "ROLE_AGRICULTEUR"
+}
+
+{
+  "nom": "Admin Tellus",
+  "email": "admin@tellus.ma",
+  "password": "adminPassword2026",
+  "role": "ROLE_ADMIN"
+}
+
+{
+  "nom": "Karim Distributeur",
+  "email": "karim@agro-market.ma",
+  "password": "password123",
+  "entreprise": "AgroMarket SARL",
+  "role": "ROLE_ACHETEUR"
+}
+
+POST http://localhost:8080/api/auth/login
+{
+  "email": "ossama@tellus.ma",
+  "password": "Password123"
+}
+
+
+{
+  "_id": { "$oid": "69ce569a05b340a8ee70956d" },
+  "produitId": "69cdaaa9ec0c51d62b4bc6c0",
+  "acheteurId": "69ce4c1b6bbeb274de738cd1",
+  "agriculteurId": "69ce453e6991472cde72bea6",
+  "agriculteurEmail": "ossama@tellus.ma",
+  "quantite": 20.0,
+  "prixTotal": 240.0,
+  "statut": "PENDING",
+  "dateCreation": { "$date": "2026-04-02T12:00:00Z" },
+  "_class": "com.tellus.tellusbackend.model.Commande"
+}
+
+GET http://localhost:8080/api/commandes/mes-ventes
+
+
+PATCH http://localhost:8080/api/commandes/69ce558805b340a8ee709568/status
+ACCEPTED
+
+
+PUT http://localhost:8080/api/auth/update-fcm-token
+
+
+
