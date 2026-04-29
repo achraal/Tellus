@@ -1,0 +1,53 @@
+@startuml tellus_sequence_annonce
+!theme plain
+skinparam sequenceArrowThickness 2
+skinparam participant {
+  BackgroundColor #E3F2FD
+  BorderColor #1976D2
+}
+
+title **Tellus** - Création d'Annonce (Offline-First)
+
+actor "Agriculteur" as User
+participant "App Mobile\nReact Native" as App
+database "Local Storage\nAsyncStorage" as Local
+participant "Backend\nSpring Boot" as API
+database "MongoDB\nTellusDB" as DB
+participant "Firebase\nFCM" as FCM
+
+== Phase 1 : Saisie Hors-ligne ==
+User -> App: Remplit formulaire annonce
+App -> App: Get Current GPS Location 
+App -> Local: saveAnnonce(data)
+Local --> App: OK (Persistance locale)
+App --> User: Alert "Enregistré (en attente de réseau)"
+
+== Phase 2 : Synchronisation (Retour Réseau) ==
+Note over App, API: Détection automatique du signal réseau
+App -> API: POST /api/annonces (JSON + GeoJSON) 
+API -> DB: insertOne(Annonce)
+DB --> API: Success (Document ID)
+
+alt Succès Synchronisation
+    API --> App: 201 Created
+    App -> Local: clearSavedAnnonce(id)
+    App --> User: Notification "Annonce publiée en ligne !"
+else Erreur Serveur
+    API --> App: 500 Error
+    App -> App: Retry later (Background Task)
+end
+
+== Phase 3 : Notification des Acheteurs ==
+API -> DB: findAcheteursProches(coords)
+DB --> API: Liste acheteurs (radius < X km)
+API -> FCM: sendPushNotification(tokens, "Nouvelle récolte proche !") 
+FCM --> API: OK
+FCM -> "Acheteurs Web": Push "Nouveaux produits disponibles"
+
+note over API, DB
+  L'indexation GeoJSON de MongoDB 
+  permet de cibler uniquement 
+  les acheteurs à proximité.
+end note
+
+@enduml
