@@ -21,7 +21,10 @@ export default function Modal({ title, onClose, children, wide = false }) {
       ref={ref}
       className={`modal ${wide ? "modal-wide" : ""}`}
       aria-labelledby={titleId}
-      onCancel={onClose}
+      onCancel={(event) => {
+        event.preventDefault();
+        onClose();
+      }}
       onClick={(e) => {
         if (e.target !== ref.current) return;
         const rect = ref.current.getBoundingClientRect();

@@ -30,13 +30,14 @@ export async function request(
     base = "/api",
     fetcher = fetch,
     responseType = "json",
+    method,
   } = {},
 ) {
   let response;
   const timeout = AbortSignal.timeout(15000);
   try {
     response = await fetcher(`${apiBase(base)}${path}`, {
-      method: body === undefined ? "GET" : "POST",
+      method: method || (body === undefined ? "GET" : "POST"),
       headers: {
         Accept: responseType === "text" ? "text/plain" : "application/json",
         ...(body === undefined ? {} : { "Content-Type": "application/json" }),
@@ -62,9 +63,14 @@ export async function request(
           ? "You do not have access to this service."
           : response.status === 429
             ? "Too many requests. Please wait and try again."
-            : "The service is unavailable. Please try again later.";
+            : response.status === 409
+              ? "Stock, price or order status changed. Refresh and review before trying again."
+              : response.status === 400
+                ? "Check the required fields, quantities, dates and currency."
+                : "The service is unavailable. Please try again later.";
     throw new ApiError(message, response.status);
   }
+  if (response.status === 204) return null;
   if (responseType === "text") {
     if (!response.headers.get("content-type")?.includes("text/plain"))
       throw new ApiError(
@@ -144,6 +150,15 @@ export function parseProducts(value) {
       label: typeof p.label === "string" ? p.label : "",
       photo,
       status: p.statut,
+      currency:
+        typeof p.currency === "string" && /^[A-Z]{3}$/.test(p.currency)
+          ? p.currency
+          : "",
+      minimum:
+        Number.isFinite(p.minimumKg) && p.minimumKg > 0 ? p.minimumKg : 1,
+      pickup: typeof p.pickupLocation === "string" ? p.pickupLocation : "",
+      growerId: p.agriculteurId,
+      raw: p,
     };
   });
 }

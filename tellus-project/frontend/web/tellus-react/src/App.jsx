@@ -4,6 +4,14 @@ import { Landscape } from "./components/Artwork.jsx";
 import Modal from "./components/Modal.jsx";
 import { useDrawer } from "./hooks/useDrawer.js";
 import {
+  Account,
+  Checkout,
+  Growers,
+  Harvests,
+  Notifications,
+  Orders,
+} from "./components/Flows.jsx";
+import {
   request,
   parseProducts,
   parseSession,
@@ -20,16 +28,18 @@ const pages = {
   producers: "Our growers",
   settings: "Settings",
   harvests: "My harvests",
+  notifications: "Notifications",
 };
 const route = () =>
   Object.hasOwn(pages, location.hash.slice(1))
     ? location.hash.slice(1)
     : "overview";
-const price = (value) =>
-  currency && /^[A-Z]{3}$/.test(currency)
-    ? new Intl.NumberFormat(undefined, { style: "currency", currency }).format(
-        value,
-      )
+const price = (value, code = currency) =>
+  code && /^[A-Z]{3}$/.test(code)
+    ? new Intl.NumberFormat(undefined, {
+        style: "currency",
+        currency: code,
+      }).format(value)
     : new Intl.NumberFormat(undefined, { maximumFractionDigits: 2 }).format(
         value,
       );
@@ -109,8 +119,8 @@ function ProductCard({ product, saved, onSave, onOpen }) {
         </div>
         <div className="product-bottom">
           <span className="price">
-            {price(product.price)}
-            <small> / kg{!currency && " · currency unspecified"}</small>
+            {price(product.price, product.currency)}
+            <small> / kg{!product.currency && " · currency unspecified"}</small>
           </span>
           <button
             className="product-add"
@@ -351,7 +361,7 @@ function SignIn({ onSignIn, notice }) {
           </p>
           <p className="field-hint">
             {signup
-              ? "Online checkout and web harvest publishing are not yet available."
+              ? "Buy fresh produce for pickup, or publish your harvests."
               : "Sessions end when you reload or close this page."}
           </p>
         </div>
@@ -372,6 +382,27 @@ function Workspace({ session, onSignOut, theme, setTheme }) {
   const [saved, setSaved] = useState([]);
   const [cart, setCart] = useState([]);
   const [modal, setModal] = useState(null);
+  const [basketBusy, setBasketBusy] = useState(false);
+  const [orderRevision, setOrderRevision] = useState(0);
+  const [growerFilter, setGrowerFilter] = useState("");
+  const pendingCheckout = useRef(null);
+  const [success, setSuccess] = useState("");
+  const api = useCallback(
+    async (path, options = {}) => {
+      try {
+        return await request(path, {
+          ...options,
+          base: API,
+          token: session.token,
+        });
+      } catch (e) {
+        if (e.status === 401)
+          onSignOut("Your session has expired. Please sign in again.");
+        throw e;
+      }
+    },
+    [session.token, onSignOut],
+  );
   const [menuOpen, setMenuOpen] = useState(false);
   const [mobile, setMobile] = useState(
     () => matchMedia("(max-width: 800px)").matches,
@@ -437,6 +468,7 @@ function Workspace({ session, onSignOut, theme, setTheme }) {
     setFilter("All");
     setSavedOnly(false);
     setSort("name");
+    setGrowerFilter("");
   };
   const toggleSaved = (id) =>
     setSaved((prev) =>
@@ -449,6 +481,7 @@ function Workspace({ session, onSignOut, theme, setTheme }) {
         (filter === "All" || availability(p) === filter) &&
         (!savedOnly || saved.includes(p.id)),
     )
+    .filter((p) => !growerFilter || p.growerId === growerFilter)
     .sort(
       sort === "price"
         ? (a, b) => a.price - b.price
@@ -496,6 +529,7 @@ function Workspace({ session, onSignOut, theme, setTheme }) {
     ["marketplace", "leaf"],
     ["orders", "box"],
     ["producers", "people"],
+    ["notifications", "box"],
     ...(farmer ? [["harvests", "leaf"]] : []),
     ["settings", "settings"],
   ];
@@ -677,7 +711,11 @@ function Workspace({ session, onSignOut, theme, setTheme }) {
                 <button onClick={() => navigate("orders")}>
                   <Icon name="box" />
                   <strong>My orders</strong>
-                  <span>Ordering availability</span>
+                  <span>
+                    {farmer
+                      ? "Manage buyer requests"
+                      : "Track your pickup requests"}
+                  </span>
                   <Icon name="arrow" />
                 </button>
               </section>
@@ -762,6 +800,11 @@ function Workspace({ session, onSignOut, theme, setTheme }) {
                 </button>
               </div>
               <div className="active-filters" aria-label="Active filters">
+                {growerFilter && (
+                  <button onClick={() => setGrowerFilter("")}>
+                    Remove grower filter <Icon name="close" size={14} />
+                  </button>
+                )}
                 {query && (
                   <button
                     onClick={() => setQuery("")}
@@ -806,28 +849,39 @@ function Workspace({ session, onSignOut, theme, setTheme }) {
             </>
           )}
           {page === "orders" && (
-            <section className="panel">
-              <Empty
-                title="Online ordering is not available yet"
-                text="You can browse produce and prepare a basket. Orders and payments cannot be submitted at this time."
-              />
-            </section>
+            <Orders
+              api={api}
+              farmer={farmer}
+              revision={orderRevision}
+              onChange={() => setRevision((v) => v + 1)}
+            />
           )}
           {page === "producers" && (
-            <section className="panel">
-              <Empty
-                title="Grower profiles are not available yet"
-                text="Verified grower information will appear here when the directory is available."
-              />
-            </section>
+            <Growers
+              api={api}
+              onBrowse={(id) => {
+                reset();
+                setGrowerFilter(id);
+                navigate("marketplace");
+              }}
+            />
           )}
-          {page === "harvests" && (
-            <section className="panel">
+          {page === "harvests" &&
+            (farmer ? (
+              <Harvests api={api} onChange={() => setRevision((v) => v + 1)} />
+            ) : (
               <Empty
-                title="Harvest management is not available on the web yet"
-                text="Publishing and editing harvests are not available at this time."
+                title="Grower account required"
+                text="Sign in with a grower account to manage harvests."
               />
-            </section>
+            ))}
+          {page === "notifications" && (
+            <Notifications api={api} revision={orderRevision} />
+          )}
+          {success && (
+            <p role="status" className="service-notice">
+              {success}
+            </p>
           )}
           {page === "settings" && (
             <section className="panel account-panel">
@@ -848,9 +902,7 @@ function Workspace({ session, onSignOut, theme, setTheme }) {
                   </dd>
                 </div>
               </dl>
-              <p className="muted">
-                Account changes are not available here yet.
-              </p>
+              <Account api={api} onPasswordChanged={() => onSignOut("Password updated. Sign in with your new password.")} />
               <h2>Appearance</h2>
               <button
                 className="button"
@@ -904,6 +956,7 @@ function Workspace({ session, onSignOut, theme, setTheme }) {
             cart.find((item) => item.id === modal.product.id)?.quantity || 0
           }
           onAdd={(quantity) => {
+            if (pendingCheckout.current) return;
             setCart((prev) => {
               const exists = prev.find((item) => item.id === modal.product.id);
               return exists
@@ -919,7 +972,13 @@ function Workspace({ session, onSignOut, theme, setTheme }) {
         />
       )}
       {modal?.type === "basket" && (
-        <Modal title="Your basket" onClose={() => setModal(null)} wide>
+        <Modal
+          title="Your basket"
+          onClose={() => {
+            if (!basketBusy) setModal(null);
+          }}
+          wide
+        >
           {!cart.length ? (
             <Empty
               title="Your basket is empty"
@@ -935,7 +994,8 @@ function Workspace({ session, onSignOut, theme, setTheme }) {
                       <div className="basket-item-main">
                         <strong>{p?.name || "Listing unavailable"}</strong>
                         <span>
-                          {item.quantity} kg{p ? ` × ${price(p.price)}` : ""}
+                          {item.quantity} kg
+                          {p ? ` × ${price(p.price, p.currency)}` : ""}
                         </span>
                         {p &&
                           (availability(p) !== "Available now" ||
@@ -947,6 +1007,9 @@ function Workspace({ session, onSignOut, theme, setTheme }) {
                       </div>
                       <button
                         className="icon-button"
+                        disabled={
+                          basketBusy || Boolean(pendingCheckout.current)
+                        }
                         aria-label={`Remove ${p?.name || "unavailable listing"}`}
                         onClick={() =>
                           setCart((prev) =>
@@ -960,18 +1023,36 @@ function Workspace({ session, onSignOut, theme, setTheme }) {
                   );
                 })}
               </div>
-              <p className="service-notice">
-                This basket is a planning list. Online checkout is not
-                available. No order has been submitted.
-              </p>
-              <p className="field-hint">
-                Delivery, minimum quantities, currency and final charges must be
-                confirmed before an order can be placed.
-              </p>
+              {pendingCheckout.current && (
+                <p className="service-notice">
+                  An interrupted request is awaiting confirmation. Retry the
+                  same request below before changing your basket.
+                </p>
+              )}
+              <Checkout
+                api={api}
+                cart={cart}
+                products={products}
+                session={session}
+                pending={pendingCheckout}
+                onBusy={setBasketBusy}
+                onConflict={() => setRevision((v) => v + 1)}
+                onDone={() => {
+                  setCart([]);
+                  setModal(null);
+                  setRevision((v) => v + 1);
+                  setOrderRevision((v) => v + 1);
+                  setSuccess(
+                    "Your order request was submitted. Follow its progress in My orders.",
+                  );
+                  navigate("orders");
+                }}
+              />
             </>
           )}
           <button
             className="button primary full-width"
+            disabled={basketBusy}
             onClick={() => {
               setModal(null);
               navigate("marketplace");
@@ -986,11 +1067,11 @@ function Workspace({ session, onSignOut, theme, setTheme }) {
   );
 }
 function ProductDetail({ product, onClose, onAdd, inCart }) {
-  const [quantity, setQuantity] = useState("1");
+  const [quantity, setQuantity] = useState(String(product.minimum));
   const available = product.stock - inCart;
   const valid =
-    Number.isInteger(Number(quantity)) &&
-    Number(quantity) > 0 &&
+    Number.isFinite(Number(quantity)) &&
+    Number(quantity) >= product.minimum &&
     Number(quantity) <= available &&
     availability(product) === "Available now";
   return (
@@ -1001,7 +1082,7 @@ function ProductDetail({ product, onClose, onAdd, inCart }) {
       <div className="detail-top">
         <span className="badge confirmed">{availability(product)}</span>
         <span className="price">
-          {price(product.price)}
+          {price(product.price, product.currency)}
           <small> / kg</small>
         </span>
       </div>
@@ -1019,10 +1100,12 @@ function ProductDetail({ product, onClose, onAdd, inCart }) {
           <span>{product.label || "Not provided"}</span>
         </p>
         <p>
-          <strong>Minimum order / delivery</strong>
-          <span>Confirmation required</span>
+          <strong>Minimum order / pickup</strong>
+          <span>
+            {product.minimum} kg · {product.pickup || "Not provided"}
+          </span>
         </p>
-        {!currency && (
+        {!product.currency && (
           <p>
             <strong>Currency</strong>
             <span>Not specified by the service</span>
@@ -1036,12 +1119,12 @@ function ProductDetail({ product, onClose, onAdd, inCart }) {
         }}
       >
         <label className="field">
-          Quantity to plan (kg)
+          Quantity (kg)
           <input
             type="number"
-            min="1"
-            max={Math.max(1, available)}
-            step="1"
+            min={product.minimum}
+            max={Math.max(product.minimum, available)}
+            step="0.01"
             required
             value={quantity}
             onChange={(e) => setQuantity(e.target.value)}
@@ -1056,7 +1139,7 @@ function ProductDetail({ product, onClose, onAdd, inCart }) {
           type="submit"
           disabled={!valid}
         >
-          Add to planning basket
+          Add to basket
           <Icon name="bag" size={18} />
         </button>
       </form>

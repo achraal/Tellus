@@ -16,6 +16,35 @@ const listing = {
   quantite: 15,
   statut: "DISPONIBLE",
 };
+test("mutation methods and empty responses match the API contract", async () => {
+  for (const method of ["PUT", "PATCH", "DELETE"]) {
+    const result = await request("/account", {
+      method,
+      token: "test",
+      fetcher: async (_url, options) => {
+        assert.equal(options.method, method);
+        assert.equal(options.headers.Authorization, "Bearer test");
+        return new Response(null, { status: 204 });
+      },
+    });
+    assert.equal(result, null);
+  }
+});
+test("listing contracts preserve currency, minimum quantity and pickup details", () => {
+  const p = parseProducts([
+    {
+      ...listing,
+      currency: "MAD",
+      minimumKg: 2.5,
+      pickupLocation: "Test farm",
+      agriculteurId: "grower",
+    },
+  ])[0];
+  assert.equal(p.currency, "MAD");
+  assert.equal(p.minimum, 2.5);
+  assert.equal(p.pickup, "Test farm");
+  assert.equal(p.growerId, "grower");
+});
 
 test("registration supports the Spring plain-text success contract", async () => {
   const result = await request("/auth/register", {
